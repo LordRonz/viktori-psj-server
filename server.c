@@ -1,8 +1,10 @@
 #include "server.h"
 
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
 void run(int argc, char **argv) {
     int socket_fd;                    /* Socket descriptor for server */
-    int client_socket_fd;                    /* Socket descriptor for client */
+    int client_socket_fd;              /* Socket descriptor for client */
     // struct sockaddr_in echoServAddr; /* Local address */
     struct sockaddr_in client_address; /* Client address */
     unsigned int client_len;            /* Length of client address data structure */
@@ -35,8 +37,9 @@ void run(int argc, char **argv) {
 
     socket_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
-    if (socket_fd == -1)
+    if (socket_fd == -1) {
         die_with_error("socket() failed");
+    }
 
     {
         int yes = 1;
@@ -67,6 +70,9 @@ void run(int argc, char **argv) {
         printf("The IPv4 address is: %s\n", ip4);
     }
 
+    uint_fast8_t thread_cnt = 0;
+    pthread_t tid[MAXTHREAD];
+
     for (;;) {
 	    /* Set the size of the in-out parameter */
         client_len = sizeof client_address;
@@ -83,7 +89,18 @@ void run(int argc, char **argv) {
 
         printf("Handling client %s port %d \n", inet_ntoa(client_address.sin_addr), client_address.sin_port);
 
-        handle_tcp_client(client_socket_fd);
+        if (pthread_create(&tid[thread_cnt++], NULL, handle_tcp_client, &client_socket_fd) != 0) {
+            die_with_error("pthread_create()");
+        }
+
+        if (thread_cnt >= MAXTHREAD) {
+            for (thread_cnt = 0; thread_cnt < MAXTHREAD; ++thread_cnt) {
+                if (pthread_join(tid[thread_cnt], NULL) != 0) {
+                    perror("pthread_join()");
+                }
+            }
+            thread_cnt = 0;
+        }
     }
     shutdown(socket_fd, SHUT_RD);
     close(socket_fd);
@@ -94,7 +111,8 @@ void die_with_error(char *error_message) {
     exit(EXIT_FAILURE);
 }
 
-void handle_tcp_client(int client_socket) {
+void *handle_tcp_client(void *arg) {
+    int client_socket = *((int *)arg);
     char echo_buffer[RCVBUFSIZE];        /* Buffer for echo string */
     int recv_msg_size;                   /* Size of received message */
 
@@ -104,15 +122,25 @@ void handle_tcp_client(int client_socket) {
     if (recv_msg_size < 0) {
         close(client_socket);
         perror("recv() failed");
-        return;
+        pthread_exit(NULL);
     }
+
+    echo_buffer[recv_msg_size] = '\0';
 
     /* Send received string and receive again until end of transmission */
     while (recv_msg_size > 0) {    /* zero indicates end of transmission */
         /* Print receiving data to Monitor */
         printf("Received Data: %s\n", echo_buffer);
 
-        append_to_txt_file(echo_buffer, recv_msg_size);
+        pthread_mutex_lock(&lock);
+
+        if (append_to_txt_file(echo_buffer, recv_msg_size) != 0) {
+            fputs("Error appending buffer to file\n", stderr);
+        }
+
+        pthread_mutex_unlock(&lock);
+
+        memset(echo_buffer, 0, RCVBUFSIZE);
 
         /* Echo message back to client */
         if (send(client_socket, "OK", 3, 0) == -1) {
@@ -127,4 +155,5 @@ void handle_tcp_client(int client_socket) {
     }
 
     close(client_socket);    /* Close client socket */
+    pthread_exit(NULL);
 }

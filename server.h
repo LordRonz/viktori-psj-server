@@ -12,13 +12,18 @@
 #include <unistd.h>     /* for close() */
 #include <errno.h>
 #include <signal.h>
+#include <pthread.h>
+#include <stdint.h>
 #include "io.h"
 
 #define MAXPENDING 10   /* Maximum outstanding connection requests */
 #define RCVBUFSIZE 32   /* Size of receive buffer */
+#define MAXTHREAD 50    /* Maximum thread count */
+
+extern pthread_mutex_t lock;
 
 void run(int, char**);
 void die_with_error(char*);  /* Error handling function */
-void handle_tcp_client(int);   /* TCP client handling function */
+void *handle_tcp_client(void*);   /* TCP client handling function */
 
 #endif

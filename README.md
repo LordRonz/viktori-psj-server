@@ -48,6 +48,7 @@ Ini ngerun di local area network, cek ip pake command `ifconfig`
 
 - [X] Write buffer yang diterima ke text file
 - [ ] Mengformat text file yang ditulis or smth
-- [ ] Support multithreading
+- [X] Support multithreading
+- [ ] Pakai scripting language e.g Python untuk mempermudah ngerun dan nampilin help description
 
 Todos lanjutan menyesuaikan dengan client (masih no clue).
