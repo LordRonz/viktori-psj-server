@@ -2,7 +2,7 @@
 
 PSJ kok iot?
 
-**Hanya bisa dirun di UNIX System, windows gabisa**
+***Hanya bisa di run di UNIX System, windows gabisa***
 > Bisa tapi ribet nanti, skip lah ya
 
 ## Yang perlu diinstall supaya bisa ngerun
@@ -46,7 +46,8 @@ Ini ngerun di local area network, cek ip pake command `ifconfig`
 
 ## TODOs
 
-- [ ] Write buffer yang diterima ke text file
+- [X] Write buffer yang diterima ke text file
+- [ ] Mengformat text file yang ditulis or smth
 - [ ] Support multithreading
 
 Todos lanjutan menyesuaikan dengan client (masih no clue).
