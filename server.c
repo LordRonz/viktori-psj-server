@@ -112,6 +112,8 @@ void handle_tcp_client(int client_socket) {
         /* Print receiving data to Monitor */
         printf("Received Data: %s\n", echo_buffer);
 
+        append_to_txt_file(echo_buffer, recv_msg_size);
+
         /* Echo message back to client */
         if (send(client_socket, "OK", 3, 0) == -1) {
             perror("send() failed");

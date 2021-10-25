@@ -12,6 +12,7 @@
 #include <unistd.h>     /* for close() */
 #include <errno.h>
 #include <signal.h>
+#include "io.h"
 
 #define MAXPENDING 10   /* Maximum outstanding connection requests */
 #define RCVBUFSIZE 32   /* Size of receive buffer */
