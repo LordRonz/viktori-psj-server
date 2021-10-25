@@ -13,7 +13,7 @@ int append_to_txt_file(char *buf, int size) {
         perror("fputs()");
         return EXIT_FAILURE;
     }
-    
+
     if (fclose(fptr) != 0) {
         perror("fclose()");
         return EXIT_FAILURE;
@@ -35,7 +35,7 @@ int append_to_bin_file(char *buf, int size) {
         perror("fwrite()");
         return EXIT_FAILURE;
     }
-    
+
     if (fclose(fptr) != 0) {
         perror("fclose()");
         return EXIT_FAILURE;
