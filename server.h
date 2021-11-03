@@ -14,16 +14,28 @@
 #include <signal.h>
 #include <pthread.h>
 #include <stdint.h>
+#include <stdbool.h>
+#include <time.h>
 #include "io.h"
 
-#define MAXPENDING 10   /* Maximum outstanding connection requests */
-#define RCVBUFSIZE 32   /* Size of receive buffer */
+#define MAXPENDING 5   /* Maximum outstanding connection requests */
+#define RCVBUFSIZE 1000 /* Size of receive buffer */
 #define MAXTHREAD 50    /* Maximum thread count */
 
 extern pthread_mutex_t lock;
+extern pthread_t tid[MAXTHREAD];
+extern bool exit_requested;
+
+typedef struct tcp_thread_args {
+    char *addr;
+    int port;
+    int client_socket_fd;
+} tcp_thread_args;
 
 void run(int, char**);
 void die_with_error(char*);  /* Error handling function */
 void *handle_tcp_client(void*);   /* TCP client handling function */
+void join_thread();
+void catcher(int);
 
 #endif
