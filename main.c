@@ -1,8 +1,8 @@
 #include "server.h"
 
 void sigint_handler(int sig) {
-    puts("Terminated");
-    exit(EXIT_SUCCESS);
+    puts("Terminating...");
+    exit_requested = true;
 }
 
 int main(int argc, char **argv) {

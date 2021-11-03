@@ -2,6 +2,10 @@
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
+pthread_t tid[MAXTHREAD] = {0};
+
+bool exit_requested = false;
+
 void run(int argc, char **argv) {
     int socket_fd;                    /* Socket descriptor for server */
     int client_socket_fd;              /* Socket descriptor for client */
@@ -71,9 +75,25 @@ void run(int argc, char **argv) {
     }
 
     uint_fast8_t thread_cnt = 0;
-    pthread_t tid[MAXTHREAD];
+    struct sigaction sact;
+    time_t t;
 
-    for (;;) {
+    sigemptyset(&sact.sa_mask);
+    sact.sa_flags = 0;
+    sact.sa_handler = catcher;
+    sigaction(SIGALRM, &sact, NULL);
+    alarm(5);
+    time(&t);
+
+    for (;!exit_requested;) {
+        // Setup exit handler signal
+        sigemptyset(&sact.sa_mask);
+        sact.sa_flags = 0;
+        sact.sa_handler = catcher;
+        sigaction(SIGALRM, &sact, NULL);
+        alarm(5);
+        time(&t);
+
 	    /* Set the size of the in-out parameter */
         client_len = sizeof client_address;
 
@@ -81,6 +101,9 @@ void run(int argc, char **argv) {
         client_socket_fd = accept(socket_fd, (struct sockaddr *) &client_address, &client_len);
 
         if (client_socket_fd < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
             perror("accept() failed");
             continue;
         }
@@ -89,21 +112,29 @@ void run(int argc, char **argv) {
 
         printf("Handling client %s port %d \n", inet_ntoa(client_address.sin_addr), client_address.sin_port);
 
-        if (pthread_create(&tid[thread_cnt++], NULL, handle_tcp_client, &client_socket_fd) != 0) {
+        tcp_thread_args *args = malloc(sizeof *args);
+
+        args->addr = inet_ntoa(client_address.sin_addr);
+        args->port = client_address.sin_port;
+        args->client_socket_fd = client_socket_fd;
+
+        if (pthread_create(&tid[thread_cnt++], NULL, handle_tcp_client, args) != 0) {
             die_with_error("pthread_create()");
         }
 
         if (thread_cnt >= MAXTHREAD) {
-            for (thread_cnt = 0; thread_cnt < MAXTHREAD; ++thread_cnt) {
-                if (pthread_join(tid[thread_cnt], NULL) != 0) {
-                    perror("pthread_join()");
-                }
-            }
+            join_thread(thread_cnt);
             thread_cnt = 0;
         }
     }
+    join_thread(thread_cnt);
     shutdown(socket_fd, SHUT_RD);
     close(socket_fd);
+    exit(EXIT_SUCCESS);
+}
+
+void catcher(int sig) {
+
 }
 
 void die_with_error(char *error_message) {
@@ -111,10 +142,22 @@ void die_with_error(char *error_message) {
     exit(EXIT_FAILURE);
 }
 
-void *handle_tcp_client(void *arg) {
-    int client_socket = *((int *)arg);
+void join_thread(int cnt) {
+    for (int thread_cnt = 0; thread_cnt < cnt; ++thread_cnt) {
+        if (pthread_join(tid[thread_cnt], NULL) != 0) {
+            perror("pthread_join()");
+        }
+    }
+}
+
+void *handle_tcp_client(void *args) {
+    int client_socket = ((tcp_thread_args *)args)->client_socket_fd;
+    int port = ((tcp_thread_args *)args)->port;
+    char *addr = ((tcp_thread_args *)args)->addr;
     char echo_buffer[RCVBUFSIZE];        /* Buffer for echo string */
     int recv_msg_size;                   /* Size of received message */
+
+    free(args);
 
     /* Receive message from client */
     recv_msg_size = recv(client_socket, echo_buffer, RCVBUFSIZE, 0);
@@ -123,6 +166,7 @@ void *handle_tcp_client(void *arg) {
         close(client_socket);
         perror("recv() failed");
         pthread_exit(NULL);
+        return NULL;
     }
 
     echo_buffer[recv_msg_size] = '\0';
@@ -143,7 +187,7 @@ void *handle_tcp_client(void *arg) {
         memset(echo_buffer, 0, RCVBUFSIZE);
 
         /* Echo message back to client */
-        if (send(client_socket, "OK", 3, 0) == -1) {
+        if (send(client_socket, "OK\n", 4, 0) == -1) {
             perror("send() failed");
         }
 
@@ -154,6 +198,8 @@ void *handle_tcp_client(void *arg) {
         }
     }
 
+    printf("Connection closed by address %s port %d\n", addr, port);
     close(client_socket);    /* Close client socket */
     pthread_exit(NULL);
+    return NULL;
 }
