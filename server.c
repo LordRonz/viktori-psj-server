@@ -4,7 +4,7 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_t tid[MAXTHREAD] = {0};
 
-bool exit_requested = false;
+volatile bool exit_requested = false;
 
 void run(int argc, char **argv) {
     int socket_fd;                    /* Socket descriptor for server */
@@ -78,13 +78,6 @@ void run(int argc, char **argv) {
     struct sigaction sact;
     time_t t;
 
-    sigemptyset(&sact.sa_mask);
-    sact.sa_flags = 0;
-    sact.sa_handler = catcher;
-    sigaction(SIGALRM, &sact, NULL);
-    alarm(5);
-    time(&t);
-
     for (;!exit_requested;) {
         // Setup exit handler signal
         sigemptyset(&sact.sa_mask);
@@ -127,7 +120,7 @@ void run(int argc, char **argv) {
             thread_cnt = 0;
         }
     }
-    join_thread(thread_cnt);
+    cancel_thread(thread_cnt);
     shutdown(socket_fd, SHUT_RD);
     close(socket_fd);
     exit(EXIT_SUCCESS);
@@ -146,6 +139,16 @@ void join_thread(int cnt) {
     for (int thread_cnt = 0; thread_cnt < cnt; ++thread_cnt) {
         if (pthread_join(tid[thread_cnt], NULL) != 0) {
             perror("pthread_join()");
+        }
+    }
+}
+
+void cancel_thread(int cnt) {
+    for (int thread_cnt = 0; thread_cnt < cnt; ++thread_cnt) {
+        if (pthread_kill(tid[thread_cnt], 0) == 0) {
+            if (pthread_cancel(tid[thread_cnt]) != 0) {
+                perror("pthread_cancel()");
+            }
         }
     }
 }

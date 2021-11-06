@@ -1,7 +1,7 @@
 #include "server.h"
 
 void sigint_handler(int sig) {
-    puts("Terminating...");
+    puts("SIGINT Received\nTerminating...");
     exit_requested = true;
 }
 

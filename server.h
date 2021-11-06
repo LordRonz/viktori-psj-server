@@ -24,7 +24,7 @@
 
 extern pthread_mutex_t lock;
 extern pthread_t tid[MAXTHREAD];
-extern bool exit_requested;
+extern volatile bool exit_requested;
 
 typedef struct tcp_thread_args {
     char *addr;
@@ -35,7 +35,8 @@ typedef struct tcp_thread_args {
 void run(int, char**);
 void die_with_error(char*);  /* Error handling function */
 void *handle_tcp_client(void*);   /* TCP client handling function */
-void join_thread();
+void join_thread(int);
+void cancel_thread(int);
 void catcher(int);
 
 #endif
