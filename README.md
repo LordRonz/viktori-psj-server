@@ -1,5 +1,7 @@
 # Viktori PSJ IOT Server
 
+## Bwat Haris: Download langsung di release executablenya
+
 PSJ kok iot?
 
 ***Hanya bisa di run di UNIX System, windows gabisa***
