@@ -6,8 +6,7 @@ pthread_t tid[MAXTHREAD] = {0};
 
 volatile bool exit_requested = false;
 
-void run(int argc, char **argv) {
-    int socket_fd;                    /* Socket descriptor for server */
+void run(const int argc, char **argv) {
     int client_socket_fd;              /* Socket descriptor for client */
     // struct sockaddr_in echoServAddr; /* Local address */
     struct sockaddr_in client_address; /* Client address */
@@ -39,7 +38,8 @@ void run(int argc, char **argv) {
 
     // make a socket:
 
-    socket_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+    /* Socket descriptor for server */
+    const int socket_fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 
     if (socket_fd == -1) {
         die_with_error("socket() failed");
@@ -130,12 +130,12 @@ void catcher(int sig) {
 
 }
 
-void die_with_error(char *error_message) {
+void die_with_error(const char *error_message) {
     perror(error_message);
     exit(EXIT_FAILURE);
 }
 
-void join_thread(int cnt) {
+void join_thread(const int cnt) {
     for (int thread_cnt = 0; thread_cnt < cnt; ++thread_cnt) {
         if (pthread_join(tid[thread_cnt], NULL) != 0) {
             perror("pthread_join()");
@@ -143,7 +143,7 @@ void join_thread(int cnt) {
     }
 }
 
-void cancel_thread(int cnt) {
+void cancel_thread(const int cnt) {
     for (int thread_cnt = 0; thread_cnt < cnt; ++thread_cnt) {
         if (pthread_kill(tid[thread_cnt], 0) == 0) {
             if (pthread_cancel(tid[thread_cnt]) != 0) {
@@ -163,6 +163,8 @@ void *handle_tcp_client(void *args) {
     free(args);
 
     /* Receive message from client */
+    memset(echo_buffer, 0, RCVBUFSIZE);
+
     recv_msg_size = recv(client_socket, echo_buffer, RCVBUFSIZE, 0);
 
     if (recv_msg_size < 0) {
@@ -176,6 +178,14 @@ void *handle_tcp_client(void *args) {
 
     /* Send received string and receive again until end of transmission */
     while (recv_msg_size > 0) {    /* zero indicates end of transmission */
+        // Validate message
+        if (!validate_input(echo_buffer)) {
+            if (send(client_socket, "INVALID INPUT\n", 15, 0) == -1) {
+                perror("send() failed");
+            }
+            break;
+        }
+
         /* Print receiving data to Monitor */
         printf("Received Data: %s\n", echo_buffer);
 
@@ -201,7 +211,7 @@ void *handle_tcp_client(void *args) {
         }
     }
 
-    printf("Connection closed by address %s port %d\n", addr, port);
+    printf("Connection closed with address %s port %d\n", addr, port);
     close(client_socket);    /* Close client socket */
     pthread_exit(NULL);
     return NULL;

@@ -1,6 +1,6 @@
 #include "io.h"
 
-int append_to_txt_file(char *buf, int size) {
+int append_to_txt_file(const char *buf, const int size) {
     FILE *fptr = NULL;
     fptr = fopen("db.txt", "a+");
 
@@ -22,7 +22,7 @@ int append_to_txt_file(char *buf, int size) {
     return EXIT_SUCCESS;
 }
 
-int append_to_bin_file(char *buf, int size) {
+int append_to_bin_file(const char *buf, const int size) {
     FILE *fptr = NULL;
     fptr = fopen("db.bin", "a+b");
 
