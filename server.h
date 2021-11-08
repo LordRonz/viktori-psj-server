@@ -17,6 +17,7 @@
 #include <stdbool.h>
 #include <time.h>
 #include "io.h"
+#include "format.h"
 
 #define MAXPENDING 5   /* Maximum outstanding connection requests */
 #define RCVBUFSIZE 1000 /* Size of receive buffer */
@@ -32,11 +33,11 @@ typedef struct tcp_thread_args {
     int client_socket_fd;
 } tcp_thread_args;
 
-void run(int, char**);
-void die_with_error(char*);  /* Error handling function */
+void run(const int, char**);
+void die_with_error(const char*);  /* Error handling function */
 void *handle_tcp_client(void*);   /* TCP client handling function */
-void join_thread(int);
-void cancel_thread(int);
+void join_thread(const int);
+void cancel_thread(const int);
 void catcher(int);
 
 #endif

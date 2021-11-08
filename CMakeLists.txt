@@ -8,7 +8,7 @@ set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 
-add_executable(Server main.c server.c io.c)
+add_executable(Server main.c server.c io.c format.c)
 
 target_link_libraries(Server Threads::Threads)
 
