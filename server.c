@@ -159,6 +159,7 @@ void *handle_tcp_client(void *args) {
     char *addr = ((tcp_thread_args *)args)->addr;
     char echo_buffer[RCVBUFSIZE];        /* Buffer for echo string */
     int recv_msg_size;                   /* Size of received message */
+    bool valid = true;
 
     free(args);
 
@@ -179,30 +180,30 @@ void *handle_tcp_client(void *args) {
     /* Send received string and receive again until end of transmission */
     while (recv_msg_size > 0) {    /* zero indicates end of transmission */
         // Validate message
-        if (!validate_input(echo_buffer)) {
+        if (!(valid = validate_input(echo_buffer))) {
             if (send(client_socket, "INVALID INPUT\n", 15, 0) == -1) {
                 perror("send() failed");
             }
-            break;
         }
 
         /* Print receiving data to Monitor */
         printf("Received Data: %s\n", echo_buffer);
 
-        pthread_mutex_lock(&lock);
+        if (valid) {
+            pthread_mutex_lock(&lock);
 
-        if (append_to_txt_file(echo_buffer, recv_msg_size) != 0) {
-            fputs("Error appending buffer to file\n", stderr);
+            if (append_to_txt_file(echo_buffer, recv_msg_size) != 0) {
+                fputs("Error appending buffer to file\n", stderr);
+            }
+
+            pthread_mutex_unlock(&lock);
+            /* Echo message back to client */
+            if (send(client_socket, "OK\n", 4, 0) == -1) {
+                perror("send() failed");
+            }
         }
-
-        pthread_mutex_unlock(&lock);
 
         memset(echo_buffer, 0, RCVBUFSIZE);
-
-        /* Echo message back to client */
-        if (send(client_socket, "OK\n", 4, 0) == -1) {
-            perror("send() failed");
-        }
 
         /* See if there is more data to receive */
         recv_msg_size = recv(client_socket, echo_buffer, RCVBUFSIZE, 0);
