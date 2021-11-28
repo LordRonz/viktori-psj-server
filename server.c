@@ -159,7 +159,8 @@ void *handle_tcp_client(void *args) {
     char *addr = ((tcp_thread_args *)args)->addr;
     char echo_buffer[RCVBUFSIZE];        /* Buffer for echo string */
     int recv_msg_size;                   /* Size of received message */
-    bool valid = true;
+    bool valid = false;
+    int mode = NORMAL_MODE;
 
     free(args);
 
@@ -179,10 +180,17 @@ void *handle_tcp_client(void *args) {
 
     /* Send received string and receive again until end of transmission */
     while (recv_msg_size > 0) {    /* zero indicates end of transmission */
-        // Validate message
-        if (!(valid = validate_input(echo_buffer))) {
-            if (send(client_socket, "INVALID INPUT\n", 15, 0) == -1) {
-                perror("send() failed");
+
+        if (is_tail(echo_buffer) != -1) {
+            mode = TAIL_MODE;
+            valid = true;
+        }
+        else {
+            // Validate message
+            if (!(valid = validate_input(echo_buffer))) {
+                if (send(client_socket, "INVALID INPUT\n", 15, 0) == -1) {
+                    perror("send() failed");
+                }
             }
         }
 
@@ -192,8 +200,13 @@ void *handle_tcp_client(void *args) {
         if (valid) {
             pthread_mutex_lock(&lock);
 
-            if (append_to_txt_file(echo_buffer, recv_msg_size) != 0) {
+            if (mode == NORMAL_MODE && append_to_txt_file(echo_buffer, recv_msg_size) != 0) {
                 fputs("Error appending buffer to file\n", stderr);
+            }
+            else if (mode == TAIL_MODE) {
+                char tail_str[TAIL_BUF];
+                FILE *in;
+                //tail()
             }
 
             pthread_mutex_unlock(&lock);
