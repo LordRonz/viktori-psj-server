@@ -22,6 +22,8 @@
 #define MAXPENDING 5   /* Maximum outstanding connection requests */
 #define RCVBUFSIZE 1000 /* Size of receive buffer */
 #define MAXTHREAD 50    /* Maximum thread count */
+#define NORMAL_MODE 0
+#define TAIL_MODE 1
 
 extern pthread_mutex_t lock;
 extern pthread_t tid[MAXTHREAD];

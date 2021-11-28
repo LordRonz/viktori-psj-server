@@ -5,7 +5,11 @@ bool validate_input(const char * input) {
     char *token;
 
     token = strtok(cpy_input, " ");
-    if (token == NULL || (strcmp(token, "0") && strcmp(token, "1"))) {
+    if (token == NULL || token[0] < '1' || token[0] > '9') {
+        free(cpy_input);
+        return false;
+    }
+    if (!is_number(token)) {
         free(cpy_input);
         return false;
     }
@@ -44,4 +48,28 @@ bool is_number(const char * str) {
         }
     }
     return true;
+}
+
+int is_tail(const char * input) {
+    char *cpy_input = strdup(input);
+    char *token;
+    char *ptr;
+
+    token = strtok(cpy_input, " ");
+    if (token == NULL || strcmp(token, "tail")) {
+        free(cpy_input);
+        return -1;
+    }
+
+    token = strtok(NULL, " ");
+    if (token == NULL || token[0] < '1' || token[0] > '9') {
+        free(cpy_input);
+        return -1;
+    }
+    if (!is_number(token)) {
+        free(cpy_input);
+        return -1;
+    }
+
+    return MAX(MIN(strtol(token, &ptr, 10), 10), 1);
 }
