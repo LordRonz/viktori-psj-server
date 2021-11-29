@@ -161,6 +161,7 @@ void *handle_tcp_client(void *args) {
     int recv_msg_size;                   /* Size of received message */
     bool valid = false;
     int mode = NORMAL_MODE;
+    int n_tail = 0;
 
     free(args);
 
@@ -181,7 +182,7 @@ void *handle_tcp_client(void *args) {
     /* Send received string and receive again until end of transmission */
     while (recv_msg_size > 0) {    /* zero indicates end of transmission */
 
-        if (is_tail(echo_buffer) != -1) {
+        if ((n_tail = is_tail(echo_buffer)) != -1) {
             mode = TAIL_MODE;
             valid = true;
         }
@@ -205,13 +206,22 @@ void *handle_tcp_client(void *args) {
             }
             else if (mode == TAIL_MODE) {
                 char tail_str[TAIL_BUF];
-                FILE *in;
-                //tail()
+                char temp_str[TAIL_BUF];
+                FILE *in = fopen("db.txt", "a+");
+                tail(in, n_tail);
+                strcpy(tail_str, "");
+                while (fgets(temp_str, sizeof temp_str, in)) {
+                    strcat(tail_str, temp_str);
+                }
+
+                if (send(client_socket, tail_str, strlen(tail_str), 0) == -1) {
+                    perror("send() failed");
+                }
             }
 
             pthread_mutex_unlock(&lock);
             /* Echo message back to client */
-            if (send(client_socket, "OK\n", 4, 0) == -1) {
+            if (mode == NORMAL_MODE && send(client_socket, "OK\n", 4, 0) == -1) {
                 perror("send() failed");
             }
         }

@@ -44,8 +44,7 @@ int append_to_bin_file(const char *buf, const int size) {
     return EXIT_SUCCESS;
 }
 
-void tail(FILE* in, int n)
-{
+void tail(FILE* in, int n) {
     int count = 0;  // To count '\n' characters
 
     // unsigned long long pos (stores upto 2^64 – 1
@@ -70,19 +69,13 @@ void tail(FILE* in, int n)
 
                     // stop reading when n newlines
                     // is found
-                    if (count++ == n)
+                    if (count++ == n) {
                         break;
+                    }
             }
             else {
                 perror("fseek() failed");
             }
         }
-
-        // // print last n lines
-        // printf("Printing last %d lines -\n", n);
-        // while (fgets(str, sizeof(str), in)) {
-        //     printf("%s", str);
-        // }
     }
-    printf("\n\n");
 }

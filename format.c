@@ -64,11 +64,11 @@ int is_tail(const char * input) {
     token = strtok(NULL, " ");
     if (token == NULL || token[0] < '1' || token[0] > '9') {
         free(cpy_input);
-        return -1;
+        return 5;
     }
     if (!is_number(token)) {
         free(cpy_input);
-        return -1;
+        return 5;
     }
 
     return MAX(MIN(strtol(token, &ptr, 10), 10), 1);
