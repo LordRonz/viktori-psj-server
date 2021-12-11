@@ -121,6 +121,7 @@ void run(const int argc, char **argv) {
         }
     }
     cancel_thread(thread_cnt);
+    join_thread(thread_cnt);
     shutdown(socket_fd, SHUT_RD);
     close(socket_fd);
     exit(EXIT_SUCCESS);
@@ -162,8 +163,10 @@ void *handle_tcp_client(void *args) {
     bool valid = false;
     int mode = NORMAL_MODE;
     int n_tail = 0;
+    FILE *in = NULL;
 
     free(args);
+    args = NULL;
 
     /* Receive message from client */
     memset(echo_buffer, 0, RCVBUFSIZE);
@@ -181,12 +184,12 @@ void *handle_tcp_client(void *args) {
 
     /* Send received string and receive again until end of transmission */
     while (recv_msg_size > 0) {    /* zero indicates end of transmission */
-
+        mode = NORMAL_MODE;
+        in = NULL;
         if ((n_tail = is_tail(echo_buffer)) != -1) {
             mode = TAIL_MODE;
             valid = true;
-        }
-        else {
+        } else {
             // Validate message
             if (!(valid = validate_input(echo_buffer))) {
                 if (send(client_socket, "INVALID INPUT\n", 15, 0) == -1) {
@@ -203,11 +206,10 @@ void *handle_tcp_client(void *args) {
 
             if (mode == NORMAL_MODE && append_to_txt_file(echo_buffer, recv_msg_size) != 0) {
                 fputs("Error appending buffer to file\n", stderr);
-            }
-            else if (mode == TAIL_MODE) {
+            } else if (mode == TAIL_MODE) {
                 char tail_str[TAIL_BUF];
                 char temp_str[TAIL_BUF];
-                FILE *in = fopen("db.txt", "a+");
+                in = fopen("db.txt", "a+");
                 tail(in, n_tail);
                 strcpy(tail_str, "");
                 while (fgets(temp_str, sizeof temp_str, in)) {
@@ -221,7 +223,7 @@ void *handle_tcp_client(void *args) {
 
             pthread_mutex_unlock(&lock);
             /* Echo message back to client */
-            if (mode == NORMAL_MODE && send(client_socket, "OK\n", 4, 0) == -1) {
+            if (mode == NORMAL_MODE && send(client_socket, "OK\n", 3, 0) == -1) {
                 perror("send() failed");
             }
         }
@@ -236,6 +238,9 @@ void *handle_tcp_client(void *args) {
     }
 
     printf("Connection closed with address %s port %d\n", addr, port);
+    if (in) {
+        fclose(in);
+    }
     close(client_socket);    /* Close client socket */
     pthread_exit(NULL);
     return NULL;

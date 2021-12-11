@@ -55,3 +55,6 @@ build
 .vscode
 db*
 vgcore.*
+
+# gdb
+.gdb_history
