@@ -55,8 +55,7 @@ void tail(FILE* in, int n) {
     // Go to End of file
     if (fseek(in, 0, SEEK_END)) {
         perror("fseek() failed");
-    }
-    else {
+    } else {
         // pos will contain no. of chars in
         // input file.
         pos = ftell(in);
@@ -72,8 +71,7 @@ void tail(FILE* in, int n) {
                     if (count++ == n) {
                         break;
                     }
-            }
-            else {
+            } else {
                 perror("fseek() failed");
             }
         }
