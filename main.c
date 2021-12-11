@@ -2,6 +2,7 @@
 
 void sigint_handler(int sig) {
     puts("SIGINT Received\nTerminating...");
+    signal(SIGINT, SIG_DFL);
     exit_requested = true;
 }
 

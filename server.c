@@ -5,6 +5,7 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_t tid[MAXTHREAD] = {0};
 
 volatile bool exit_requested = false;
+volatile uint8_t fork_cnt = 0;
 
 void run(const int argc, char **argv) {
     int client_socket_fd;              /* Socket descriptor for client */
@@ -77,6 +78,7 @@ void run(const int argc, char **argv) {
     uint_fast8_t thread_cnt = 0;
     struct sigaction sact;
     time_t t;
+    int pid = getpid();
 
     for (;!exit_requested;) {
         // Setup exit handler signal
@@ -101,6 +103,30 @@ void run(const int argc, char **argv) {
             continue;
         }
 
+        if (thread_cnt >= MAXTHREAD) {
+            if (fork_cnt < MAXFORK) {
+                ++fork_cnt;
+                puts("Spawning child process...");
+                pid = fork();
+                if (pid > 0) {
+                    close(client_socket_fd);
+                    client_socket_fd = 0;
+                }
+            }
+            if (pid == 0) {
+                memset(tid, 0, MAXTHREAD);
+                thread_cnt = 0;
+                pid = getpid();
+                continue;
+            }
+            join_thread(thread_cnt);
+            thread_cnt = 0;
+
+            if (client_socket_fd == 0) {
+                continue;
+            }
+        }
+
         /* client socket is connected to a client! */
 
         printf("Handling client %s port %d \n", inet_ntoa(client_address.sin_addr), client_address.sin_port);
@@ -113,11 +139,6 @@ void run(const int argc, char **argv) {
 
         if (pthread_create(&tid[thread_cnt++], NULL, handle_tcp_client, args) != 0) {
             die_with_error("pthread_create()");
-        }
-
-        if (thread_cnt >= MAXTHREAD) {
-            join_thread(thread_cnt);
-            thread_cnt = 0;
         }
     }
     cancel_thread(thread_cnt);

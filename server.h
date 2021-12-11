@@ -21,13 +21,15 @@
 
 #define MAXPENDING 5   /* Maximum outstanding connection requests */
 #define RCVBUFSIZE 1000 /* Size of receive buffer */
-#define MAXTHREAD 50    /* Maximum thread count */
+#define MAXTHREAD 4    /* Maximum thread count */
+#define MAXFORK 1       /* Maximum fork count */
 #define NORMAL_MODE 0
 #define TAIL_MODE 1
 
 extern pthread_mutex_t lock;
 extern pthread_t tid[MAXTHREAD];
 extern volatile bool exit_requested;
+extern volatile uint8_t fork_cnt;
 
 typedef struct tcp_thread_args {
     char *addr;
