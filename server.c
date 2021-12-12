@@ -14,7 +14,7 @@ void run(const int argc, char **argv) {
     unsigned int client_len;            /* Length of client address data structure */
     struct addrinfo hints, *res;
     char ip4[INET_ADDRSTRLEN];	     // Space to hold the IPv4 string
-    unsigned short max_fork = MAXFORKPARENT;
+    unsigned short max_fork = 1;
 
     {
         char hostname[100];
@@ -79,7 +79,7 @@ void run(const int argc, char **argv) {
     uint_fast8_t thread_cnt = 0;
     struct sigaction sact;
     time_t t;
-    int pid = getpid();
+    pid_t pid = getpid();
 
     for (;!exit_requested;) {
         // Setup exit handler signal
@@ -107,12 +107,12 @@ void run(const int argc, char **argv) {
         if (thread_cnt >= MAXTHREAD) {
             if (fork_cnt < max_fork) {
                 ++fork_cnt;
-                printf("Spawning child process %d...\n", fork_cnt);
-                max_fork = MAXFORKCHILD;
+                printf("Spawning child process %d... from pid %d\n", fork_cnt, pid);
+                max_fork += max_fork < MAXFORK ? 1 : 0;
                 pid = fork();
                 if (pid > 0) {
                     close(client_socket_fd);
-                    max_fork = MAXFORKPARENT;
+                    max_fork = 1;
                     client_socket_fd = 0;
                 }
             }
