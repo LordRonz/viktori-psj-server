@@ -14,6 +14,7 @@ void run(const int argc, char **argv) {
     unsigned int client_len;            /* Length of client address data structure */
     struct addrinfo hints, *res;
     char ip4[INET_ADDRSTRLEN];	     // Space to hold the IPv4 string
+    unsigned short max_fork = MAXFORKPARENT;
 
     {
         char hostname[100];
@@ -96,7 +97,7 @@ void run(const int argc, char **argv) {
         client_socket_fd = accept(socket_fd, (struct sockaddr *) &client_address, &client_len);
 
         if (client_socket_fd < 0) {
-            if (errno == EINTR) {
+            if (errno == EINTR || errno == EINVAL) {
                 continue;
             }
             perror("accept() failed");
@@ -104,12 +105,14 @@ void run(const int argc, char **argv) {
         }
 
         if (thread_cnt >= MAXTHREAD) {
-            if (fork_cnt < MAXFORK) {
+            if (fork_cnt < max_fork) {
                 ++fork_cnt;
-                puts("Spawning child process...");
+                printf("Spawning child process %d...\n", fork_cnt);
+                max_fork = MAXFORKCHILD;
                 pid = fork();
                 if (pid > 0) {
                     close(client_socket_fd);
+                    max_fork = MAXFORKPARENT;
                     client_socket_fd = 0;
                 }
             }
@@ -119,8 +122,11 @@ void run(const int argc, char **argv) {
                 pid = getpid();
                 continue;
             }
-            join_thread(thread_cnt);
-            thread_cnt = 0;
+
+            if (thread_cnt >= MAXTHREAD && fork_cnt >= max_fork) {
+                join_thread(thread_cnt);
+                thread_cnt = 0;
+            }
 
             if (client_socket_fd == 0) {
                 continue;

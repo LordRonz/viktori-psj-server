@@ -22,7 +22,8 @@
 #define MAXPENDING 5   /* Maximum outstanding connection requests */
 #define RCVBUFSIZE 1000 /* Size of receive buffer */
 #define MAXTHREAD 4    /* Maximum thread count */
-#define MAXFORK 1       /* Maximum fork count */
+#define MAXFORKPARENT 4       /* Maximum fork count in the parent process*/
+#define MAXFORKCHILD 1
 #define NORMAL_MODE 0
 #define TAIL_MODE 1
 
