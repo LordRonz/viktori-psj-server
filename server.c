@@ -78,7 +78,6 @@ void run(const int argc, char **argv) {
 
     uint_fast8_t thread_cnt = 0;
     struct sigaction sact;
-    time_t t;
     pid_t pid = getpid();
 
     for (;!exit_requested;) {
@@ -88,7 +87,6 @@ void run(const int argc, char **argv) {
         sact.sa_handler = catcher;
         sigaction(SIGALRM, &sact, NULL);
         alarm(5);
-        time(&t);
 
 	    /* Set the size of the in-out parameter */
         client_len = sizeof client_address;
