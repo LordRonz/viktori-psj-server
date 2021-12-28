@@ -1,5 +1,17 @@
 # Viktori PSJ Server
 
+## Index link
+
+[Link untuk referensi](https://lordronz.github.io/viktori-psj-server)
+
+## Deskripsi
+
+Repo ini adalah sisi server dari projek FP pemrograman sistem dan jaringan.
+
+Untuk client akses di [link ini](https://github.com/lordronz/viktori-psj-client)
+
+Dan untuk program yang ditempatkan di arduino silahkan akses di [link ini](https://github.com/lordronz/viktori-psj-arduino)
+
 ## Kelompok
 
 - Aaron Christopher 07211940000055
